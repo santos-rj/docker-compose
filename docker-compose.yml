@@ -1,0 +1,599 @@
+services:
+  # Serviço: appsmith
+  # Variáveis: APPSMITH_VERSION, APPSMITH_CONTAINER_NAME, APPSMITH_RESTART_POLICY
+  appsmith:
+    image: appsmith/appsmith-ce:${APPSMITH_VERSION}
+    container_name: ${APPSMITH_CONTAINER_NAME}
+    ports:
+      - 8085:80
+    volumes:
+      - appsmith:/appsmith-stacks
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: ${APPSMITH_RESTART_POLICY}
+  # Serviço: archlinux
+  # Variáveis: ARCHLINUX_VERSION, ARCHLINUX_CONTAINER_NAME, ARCHLINUX_RESTART_POLICY
+  archlinux:
+    image: archlinux:${ARCHLINUX_VERSION}
+    container_name: ${ARCHLINUX_CONTAINER_NAME}
+    tty: true
+    volumes:
+      - ./volumes/archlinux/:/home/shared
+    restart: ${ARCHLINUX_RESTART_POLICY}
+  # Serviço: debian
+  # Variáveis: DEBIAN_VERSION, DEBIAN_CONTAINER_NAME, DEBIAN_RESTART_POLICY
+  debian:
+    image: debian:${DEBIAN_VERSION}
+    container_name: ${DEBIAN_CONTAINER_NAME}
+    tty: true
+    volumes:
+      - ./volumes/debian/:/home/shared
+    restart: ${DEBIAN_RESTART_POLICY}
+  # Serviço: fedora
+  # Variáveis: FEDORA_VERSION, FEDORA_CONTAINER_NAME, FEDORA_RESTART_POLICY
+  fedora:
+    image: fedora:${FEDORA_VERSION}
+    container_name: ${FEDORA_CONTAINER_NAME}
+    tty: true
+    volumes:
+      - ./volumes/fedora/:/home/shared
+    restart: ${FEDORA_RESTART_POLICY}
+  # Serviço: gitea
+  # Variáveis: GITEA_VERSION, GITEA_CONTAINER_NAME, GITEA_RESTART_POLICY
+  gitea:
+    image: gitea/gitea:${GITEA_VERSION}
+    container_name: ${GITEA_CONTAINER_NAME}
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+    volumes:
+      - gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 3002:3000
+    restart: ${GITEA_RESTART_POLICY}
+  # Serviço: grafana
+  # Variáveis: GRAFANA_VERSION, GRAFANA_CONTAINER_NAME, GRAFANA_RESTART_POLICY, GRAFANA_TRAEFIK_HOST
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION}
+    container_name: ${GRAFANA_CONTAINER_NAME}
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana:/var/lib/grafana
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host(`${GRAFANA_TRAEFIK_HOST}`)
+      - traefik.http.routers.grafana.tls=true
+      - traefik.http.routers.grafana.tls.certresolver=letsencrypt
+    restart: ${GRAFANA_RESTART_POLICY}
+  # Serviço: hoppscotch
+  # Variáveis: HOPPSCOTCH_VERSION, HOPPSCOTCH_CONTAINER_NAME, HOPPSCOTCH_RESTART_POLICY, HOPPSCOTCH_TRAEFIK_HOST
+  hoppscotch:
+    image: hoppscotch/hoppscotch:${HOPPSCOTCH_VERSION}
+    container_name: ${HOPPSCOTCH_CONTAINER_NAME}
+    ports:
+      - 3004:3000
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.hoppscotch.rule=Host(`${HOPPSCOTCH_TRAEFIK_HOST}`)
+      - traefik.http.routers.hoppscotch.tls=true
+      - traefik.http.routers.hoppscotch.tls.certresolver=letsencrypt
+    restart: ${HOPPSCOTCH_RESTART_POLICY}
+  # Serviço: kali
+  # Variáveis: KALI_VERSION, KALI_CONTAINER_NAME, KALI_RESTART_POLICY
+  kali:
+    image: kalilinux/kali-rolling:${KALI_VERSION}
+    container_name: ${KALI_CONTAINER_NAME}
+    tty: true
+    restart: ${KALI_RESTART_POLICY}
+  # Serviço: localstack
+  # Variáveis: LOCALSTACK_VERSION, LOCALSTACK_CONTAINER_NAME, DEBUG
+  localstack:
+    image: localstack/localstack:${LOCALSTACK_VERSION}
+    container_name: ${LOCALSTACK_CONTAINER_NAME}
+    ports:
+      - 127.0.0.1:4566:4566
+      - 127.0.0.1:4510-4559:4510-4559
+    environment:
+      DEBUG: ${DEBUG}
+    volumes:
+      - localstack:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+  # Serviço: linkstack
+  # Variáveis: LINKSTACK_CONTAINER_NAME, LINKSTACK_TRAEFIK_HOST, LINKSTACK_RESTART_POLICY
+  linkstack:
+    image: linkstackorg/linkstack
+    container_name: ${LINKSTACK_CONTAINER_NAME}
+    environment:
+      HTTP_SERVER_NAME: ${LINKSTACK_TRAEFIK_HOST}
+      HTTPS_SERVER_NAME: ${LINKSTACK_TRAEFIK_HOST}
+    ports:
+      - 8082:80
+    volumes:
+      - linkstack:/htdocs
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.linkstack.rule=Host(`${LINKSTACK_TRAEFIK_HOST}`)
+      - traefik.http.routers.linkstack.tls=true
+      - traefik.http.routers.linkstack.tls.certresolver=letsencrypt
+    restart: ${LINKSTACK_RESTART_POLICY}
+  # Serviço: loki
+  # Variáveis: LOKI_VERSION, LOKI_CONTAINER_NAME, LOKI_RESTART_POLICY
+  loki:
+    image: grafana/loki:${LOKI_VERSION}
+    container_name: ${LOKI_CONTAINER_NAME}
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: ${LOKI_RESTART_POLICY}
+  # Serviço: mautic
+  # Variáveis: MAUTIC_VERSION, MAUTIC_CONTAINER_NAME, MAUTIC_DB_HOST, MAUTIC_DB_PORT, MAUTIC_DB_USER, MAUTIC_DB_PASSWORD, MAUTIC_TRAEFIK_HOST, MAUTIC_RESTART_POLICY
+  mautic:
+    image: mautic/mautic:${MAUTIC_VERSION}
+    container_name: ${MAUTIC_CONTAINER_NAME}
+    ports:
+      - 8084:80
+    environment:
+      MAUTIC_DB_HOST: ${MAUTIC_DB_HOST}
+      MAUTIC_DB_PORT: ${MAUTIC_DB_PORT}
+      MAUTIC_DB_USER: ${MAUTIC_DB_USER}
+      MAUTIC_DB_PASSWORD: ${MAUTIC_DB_PASSWORD}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mautic.rule=Host(`${MAUTIC_TRAEFIK_HOST}`)
+      - traefik.http.routers.mautic.tls=true
+      - traefik.http.routers.mautic.tls.certresolver=letsencrypt
+    restart: ${MAUTIC_RESTART_POLICY}
+  # Serviço: matomo
+  # Variáveis: MATOMO_VERSION, MATOMO_CONTAINER_NAME, MATOMO_RESTART_POLICY, MATOMO_TRAEFIK_HOST
+  matomo:
+    image: matomo:${MATOMO_VERSION}
+    container_name: ${MATOMO_CONTAINER_NAME}
+    ports:
+      - 8086:80
+    volumes:
+      - matomo:/var/www/html
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.matomo.rule=Host(`${MATOMO_TRAEFIK_HOST}`)
+      - traefik.http.routers.matomo.tls=true
+      - traefik.http.routers.matomo.tls.certresolver=letsencrypt
+    restart: ${MATOMO_RESTART_POLICY}
+  # Serviço: metabase
+  # Variáveis: METABASE_VERSION, METABASE_CONTAINER_NAME, METABASE_RESTART_POLICY, METABASE_TRAEFIK_HOST
+  metabase:
+    image: metabase/metabase:${METABASE_VERSION}
+    container_name: ${METABASE_CONTAINER_NAME}
+    ports:
+      - 3001:3000
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+    volumes:
+      - metabase:/metabase-data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.metabase.rule=Host(`${METABASE_TRAEFIK_HOST}`)
+      - traefik.http.routers.metabase.tls=true
+      - traefik.http.routers.metabase.tls.certresolver=letsencrypt
+    restart: ${METABASE_RESTART_POLICY}
+  # Serviço: mongo
+  # Variáveis: MONGO_VERSION, MONGO_CONTAINER_NAME, MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_RESTART_POLICY
+  mongo:
+    image: mongo:${MONGO_VERSION}
+    container_name: ${MONGO_CONTAINER_NAME}
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongo:/data/db
+    restart: ${MONGO_RESTART_POLICY}
+  # Serviço: mysql
+  # Variáveis: MYSQL_VERSION, MYSQL_CONTAINER_NAME, MYSQL_DATABASE, MYSQL_ROOT_PASSWORD, MYSQL_RESTART_POLICY
+  mysql:
+    image: mysql:${MYSQL_VERSION}
+    container_name: ${MYSQL_CONTAINER_NAME}
+    command: |
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --sql-mode=""
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql:/var/lib/mysql
+    restart: ${MYSQL_RESTART_POLICY}
+  # Serviço: nextcloud
+  # Variáveis: NEXTCLOUD_VERSION, NEXTCLOUD_CONTAINER_NAME, NEXTCLOUD_RESTART_POLICY, NEXTCLOUD_TRAEFIK_HOST
+  nextcloud:
+    image: nextcloud:${NEXTCLOUD_VERSION}
+    container_name: ${NEXTCLOUD_CONTAINER_NAME}
+    ports:
+      - 8083:80
+    volumes:
+      - nextcloud:/var/www/html
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_TRAEFIK_HOST}`)
+      - traefik.http.routers.nextcloud.tls=true
+      - traefik.http.routers.nextcloud.tls.certresolver=letsencrypt
+    restart: ${NEXTCLOUD_RESTART_POLICY}
+  # Serviço: nginx
+  # Variáveis: NGINX_VERSION, NGINX_CONTAINER_NAME, NGINX_RESTART_POLICY
+  nginx:
+    image: nginx:${NGINX_VERSION}
+    container_name: ${NGINX_CONTAINER_NAME}
+    ports:
+      - 8081:80
+      # - 443:433
+    volumes:
+      - ./config/nginx/sites-available:/etc/nginx/sites-available
+      # - ./config/nginx/letsencrypt:/etc/letsencrypt
+    restart: ${NGINX_RESTART_POLICY}
+  # Serviço: ollama
+  # Variáveis: OLLAMA_VERSION, OLLAMA_CONTAINER_NAME, OLLAMA_USERS, OLLAMA_TRAEFIK_HOST, OLLAMA_RESTART_POLICY
+  ollama:
+    image: ollama/ollama:${OLLAMA_VERSION}
+    container_name: ${OLLAMA_CONTAINER_NAME}
+    ports:
+      - 11434:11434
+    volumes:
+      - ollama:/root/.ollama
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.ollama-auth.basicauth.users=${OLLAMA_USERS}
+      - traefik.http.routers.ollama.rule=Host(`${OLLAMA_TRAEFIK_HOST}`)
+      - traefik.http.routers.ollama.tls=true
+      - traefik.http.routers.ollama.tls.certresolver=letsencrypt
+      - traefik.http.routers.ollama.middlewares=ollama-auth
+    restart: ${OLLAMA_RESTART_POLICY}
+  # Serviço: open-webui
+  # Variáveis: OPEN_WEBUI_VERSION, OPEN_WEBUI_CONTAINER_NAME, OLLAMA_BASE_URL
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}
+    container_name: ${OPEN_WEBUI_CONTAINER_NAME}
+    depends_on:
+      - ollama
+    ports:
+      - 3000:8080
+    volumes:
+      - open-webui:/app/backend/data
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+  # Serviço: pgadmin
+  # Variáveis: PGADMIN_VERSION, PGADMIN_CONTAINER_NAME, PGADMIN_DEFAULT_EMAIL, PGADMIN_DEFAULT_PASSWORD, PGADMIN_TRAEFIK_HOST, PGADMIN_RESTART_POLICY
+  pgadmin:
+    image: dpage/pgadmin4:${PGADMIN_VERSION}
+    container_name: ${PGADMIN_CONTAINER_NAME}
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - 16543:80
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pgadmin.rule=Host(`${PGADMIN_TRAEFIK_HOST}`)
+      - traefik.http.routers.pgadmin.tls=true
+      - traefik.http.routers.pgadmin.tls.certresolver=letsencrypt
+    restart: ${PGADMIN_RESTART_POLICY}
+  # Serviço: phpmyadmin
+  # Variáveis: PHPMYADMIN_VERSION, PHPMYADMIN_CONTAINER_NAME, PHPMYADMIN_RESTART_POLICY
+  phpmyadmin:
+    image: phpmyadmin:${PHPMYADMIN_VERSION}
+    container_name: ${PHPMYADMIN_CONTAINER_NAME}
+    environment:
+      PMA_ARBITRARY: 1
+    ports:
+      - 8087:80
+    restart: ${PHPMYADMIN_RESTART_POLICY}
+  # Serviço: portainer
+  # Variáveis: PORTAINER_VERSION, PORTAINER_CONTAINER_NAME, PORTAINER_RESTART_POLICY, PORTAINER_TRAEFIK_HOST
+  portainer:
+    image: portainer/portainer-ce:${PORTAINER_VERSION}
+    container_name: ${PORTAINER_CONTAINER_NAME}
+    ports:
+      - 8000:8000
+      - 9000:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.portainer.rule=Host(`${PORTAINER_TRAEFIK_HOST}`)
+      - traefik.http.routers.portainer.tls=true
+      - traefik.http.routers.portainer.tls.certresolver=letsencrypt
+    restart: ${PORTAINER_RESTART_POLICY}
+  # Serviço: postgres
+  # Variáveis: POSTGRESQL_VERSION, POSTGRESQL_CONTAINER_NAME, POSTGRESQL_USER, POSTGRESQL_PASSWORD, POSTGRESQL_DB, POSTGRESQL_ENABLE_TLS, POSTGRESQL_RESTART_POLICY
+  postgres:
+    image: bitnami/postgresql:${POSTGRESQL_VERSION}
+    container_name: ${POSTGRESQL_CONTAINER_NAME}
+    environment:
+      POSTGRESQL_USER: ${POSTGRESQL_USER}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_DB: ${POSTGRESQL_DB}
+      POSTGRESQL_ENABLE_TLS: ${POSTGRESQL_ENABLE_TLS}
+      POSTGRESQL_TLS_CERT_FILE: /opt/bitnami/postgresql/certs/postgres.crt
+      POSTGRESQL_TLS_KEY_FILE: /opt/bitnami/postgresql/certs/postgres.key
+    ports:
+      - 5432:5432
+    volumes:
+      - ./volumes/postgres/certs:/opt/bitnami/postgresql/certs
+      - postgres:/var/lib/postgresql/data
+    restart: ${POSTGRESQL_RESTART_POLICY}
+  # Serviço: prometheus
+  # Variáveis: PROMETHEUS_VERSION, PROMETHEUS_CONTAINER_NAME, PROMETHEUS_RESTART_POLICY
+  prometheus:
+    image: prom/prometheus:${PROMETHEUS_VERSION}
+    container_name: ${PROMETHEUS_CONTAINER_NAME}
+    ports:
+      - 9090:9090
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: ${PROMETHEUS_RESTART_POLICY}
+  # Serviço: promtail
+  # Variáveis: PROMTAIL_VERSION, PROMTAIL_CONTAINER_NAME, PROMTAIL_RESTART_POLICY
+  promtail:
+    image: grafana/promtail:${PROMTAIL_VERSION}
+    container_name: ${PROMTAIL_CONTAINER_NAME}
+    ports:
+      - 9080:9080
+    volumes:
+      - ./config/promtail/config.yaml:/etc/promtail/config.yaml
+      - /var/log:/var/log
+    command: -config.file=/etc/promtail/config.yaml
+    restart: ${PROMTAIL_RESTART_POLICY}
+  # Serviço: rabbitmq
+  # Variáveis: RABBITMQ_VERSION, RABBITMQ_CONTAINER_NAME, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_PASS, RABBITMQ_TRAEFIK_HOST, RABBITMQ_RESTART_POLICY
+  rabbitmq:
+    image: rabbitmq:${RABBITMQ_VERSION}
+    container_name: ${RABBITMQ_CONTAINER_NAME}
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.rabbitmq.rule=Host(`${RABBITMQ_TRAEFIK_HOST}`)
+      - traefik.http.routers.rabbitmq.service=rabbitmq
+      - traefik.http.routers.rabbitmq.tls=true
+      - traefik.http.routers.rabbitmq.tls.certresolver=letsencrypt
+      - traefik.http.services.rabbitmq.loadbalancer.server.port=15672
+    restart: ${RABBITMQ_RESTART_POLICY}
+  # Serviço: redis
+  # Variáveis: REDIS_VERSION, REDIS_CONTAINER_NAME, REDIS_PASSWORD, REDIS_RESTART_POLICY
+  redis:
+    image: redis:${REDIS_VERSION}
+    container_name: ${REDIS_CONTAINER_NAME}
+    ports:
+      - 6379:6379
+    command: redis-server --requirepass "${REDIS_PASSWORD}"
+    restart: ${REDIS_RESTART_POLICY}
+  # Serviço: redisinsight
+  # Variáveis: REDISINSIGHT_VERSION, REDISINSIGHT_CONTAINER_NAME, REDISINSIGHT_RITRUSTEDORIGINS, REDISINSIGHT_TRAEFIK_HOST, REDISINSIGHT_RESTART_POLICY
+  redisinsight:
+    image: redislabs/redisinsight:${REDISINSIGHT_VERSION}
+    container_name: ${REDISINSIGHT_CONTAINER_NAME}
+    ports:
+      - 5540:5540
+    environment:
+      RITRUSTEDORIGINS: ${REDISINSIGHT_RITRUSTEDORIGINS}
+    volumes:
+      - redisinsight:/db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.redisinsight.rule=Host(`${REDISINSIGHT_TRAEFIK_HOST}`)
+      - traefik.http.routers.redisinsight.tls=true
+      - traefik.http.routers.redisinsight.tls.certresolver=letsencrypt
+    restart: ${REDISINSIGHT_RESTART_POLICY}
+  # Serviço: rethinkdb
+  # Variáveis: RETHINKDB_VERSION, RETHINKDB_CONTAINER_NAME, RETHINKDB_RESTART_POLICY
+  rethinkdb:
+    image: rethinkdb:${RETHINKDB_VERSION}
+    container_name: ${RETHINKDB_CONTAINER_NAME}
+    ports:
+      - 28015:28015
+      - 28016:8080
+    volumes:
+      - rethinkdb:/data
+    restart: ${RETHINKDB_RESTART_POLICY}
+  # Serviço: shlink
+  # Variáveis: SHLINK_VERSION, SHLINK_CONTAINER_NAME, SHLINK_DEFAULT_DOMAIN, SHLINK_IS_HTTPS_ENABLED, SHLINK_INITIAL_API_KEY, SHLINK_DB_DRIVER, SHLINK_DB_HOST, SHLINK_DB_USER, SHLINK_DB_PASSWORD, SHLINK_TRAEFIK_HOST, SHLINK_RESTART_POLICY
+  shlink:
+    image: shlinkio/shlink:${SHLINK_VERSION}
+    container_name: ${SHLINK_CONTAINER_NAME}
+    ports:
+      - 8088:8080
+    environment:
+      DEFAULT_DOMAIN: ${SHLINK_DEFAULT_DOMAIN}
+      IS_HTTPS_ENABLED: ${SHLINK_IS_HTTPS_ENABLED}
+      INITIAL_API_KEY: ${SHLINK_INITIAL_API_KEY}
+      DB_DRIVER: ${SHLINK_DB_DRIVER}
+      DB_HOST: ${SHLINK_DB_HOST}
+      DB_USER: ${SHLINK_DB_USER}
+      DB_PASSWORD: ${SHLINK_DB_PASSWORD}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.shlink.rule=Host(`${SHLINK_TRAEFIK_HOST}`)
+      - traefik.http.routers.shlink.tls=true
+      - traefik.http.routers.shlink.tls.certresolver=letsencrypt
+    restart: ${SHLINK_RESTART_POLICY}
+  # Serviço: sonarqube
+  # Variáveis: SONARQUBE_VERSION, SONARQUBE_CONTAINER_NAME, SONARQUBE_TRAEFIK_HOST, SONARQUBE_RESTART_POLICY
+  sonarqube:
+    image: sonarqube:${SONARQUBE_VERSION}
+    container_name: ${SONARQUBE_CONTAINER_NAME}
+    ports:
+      - 9001:9000
+    volumes:
+      - sonarqube:/opt/sonarqube/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.sonarqube.rule=Host(`${SONARQUBE_TRAEFIK_HOST}`)
+      - traefik.http.routers.sonarqube.tls=true
+      - traefik.http.routers.sonarqube.tls.certresolver=letsencrypt
+    restart: ${SONARQUBE_RESTART_POLICY}
+  # Serviço: sonic
+  # Variáveis: SONIC_VERSION, SONIC_CONTAINER_NAME, SONIC_RESTART_POLICY
+  sonic:
+    image: valeriansaliou/sonic:${SONIC_VERSION}
+    container_name: ${SONIC_CONTAINER_NAME}
+    ports:
+      - 1491:1491
+    volumes:
+      - ./volumes/sonic/sonic.cfg:/etc/sonic.cfg
+      - ./volumes/sonic/store/:/var/lib/sonic/store/
+    restart: ${SONIC_RESTART_POLICY}
+  # Serviço: sqlserver
+  # Variáveis: SQLSERVER_VERSION, SQLSERVER_CONTAINER_NAME, SQLSERVER_SA_PASSWORD, SQLSERVER_RESTART_POLICY
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:${SQLSERVER_VERSION}
+    container_name: ${SQLSERVER_CONTAINER_NAME}
+    environment:
+      SA_PASSWORD: ${SQLSERVER_SA_PASSWORD}
+      ACCEPT_EULA: Y
+    ports:
+      - 1433:1433
+    restart: ${SQLSERVER_RESTART_POLICY}
+  # Serviço: traefik
+  # Variáveis: TRAEFIK_VERSION, TRAEFIK_CONTAINER_NAME, TRAEFIK_ACME_EMAIL, TRAEFIK_DASHBOARD_USERNAME, TRAEFIK_DASHBOARD_PASSWORD, TRAEFIK_DASHBOARD_HOST, TRAEFIK_RESTART_POLICY
+  traefik:
+    image: traefik:${TRAEFIK_VERSION}
+    container_name: ${TRAEFIK_CONTAINER_NAME}
+    command:
+      - --providers.docker
+      - --providers.docker.exposedByDefault=false
+      - --api.dashboard=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./volumes/traefik/acme:/etc/traefik/acme
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_DASHBOARD_USERNAME}:${TRAEFIK_DASHBOARD_PASSWORD}
+      - traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)
+      - traefik.http.routers.traefik.service=api@internal
+      - traefik.http.routers.traefik.middlewares=traefik-auth
+      - traefik.http.routers.traefik.tls=true
+      - traefik.http.routers.traefik.tls.certresolver=letsencrypt
+    restart: ${TRAEFIK_RESTART_POLICY}
+  # Serviço: ubuntu
+  # Variáveis: UBUNTU_VERSION, UBUNTU_CONTAINER_NAME, UBUNTU_RESTART_POLICY
+  ubuntu:
+    image: ubuntu:${UBUNTU_VERSION}
+    container_name: ${UBUNTU_CONTAINER_NAME}
+    tty: true
+    volumes:
+      - ./volumes/ubuntu/:/home/shared
+    restart: ${UBUNTU_RESTART_POLICY}
+  # Serviço: verdaccio
+  # Variáveis: VERDACCIO_VERSION, VERDACCIO_CONTAINER_NAME, VERDACCIO_RESTART_POLICY, VERDACCIO_TRAEFIK_HOST
+  verdaccio:
+    image: verdaccio/verdaccio:${VERDACCIO_VERSION}
+    container_name: ${VERDACCIO_CONTAINER_NAME}
+    environment:
+      VERDACCIO_PORT: 4873
+    ports:
+      - 4873:4873
+    volumes:
+      - verdaccio:/verdaccio/storage
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.verdaccio.rule=Host(`${VERDACCIO_TRAEFIK_HOST}`)
+      - traefik.http.routers.verdaccio.tls=true
+      - traefik.http.routers.verdaccio.tls.certresolver=letsencrypt
+    restart: ${VERDACCIO_RESTART_POLICY}
+  # Serviço: vscode
+  # Variáveis: VSCODE_VERSION, VSCODE_CONTAINER_NAME, VSCODE_TIMEZONE, VSCODE_CONNECTION_TOKEN, VSCODE_SUDO_PASSWORD, VSCODE_BASE_FOLDER, VSCODE_RESTART_POLICY, VSCODE_TRAEFIK_HOST
+  vscode:
+    image: lscr.io/linuxserver/openvscode-server:${VSCODE_VERSION}
+    container_name: ${VSCODE_CONTAINER_NAME}
+    ports:
+      - 3003:3000
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: ${VSCODE_TIMEZONE}
+      CONNECTION_TOKEN: ${VSCODE_CONNECTION_TOKEN}
+      SUDO_PASSWORD: ${VSCODE_SUDO_PASSWORD}
+    volumes:
+      - ${VSCODE_BASE_FOLDER}:/config
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.vscode.rule=Host(`${VSCODE_TRAEFIK_HOST}`)
+      - traefik.http.routers.vscode.tls=true
+      - traefik.http.routers.vscode.tls.certresolver=letsencrypt
+    restart: ${VSCODE_RESTART_POLICY}
+  # Serviço: windows
+  # Variáveis: WINDOWS_CONTAINER_NAME, WINDOWS_VERSION, WINDOWS_RESTART_POLICY
+  windows:
+    image: dockurr/windows
+    container_name: ${WINDOWS_CONTAINER_NAME}
+    environment:
+      VERSION: ${WINDOWS_VERSION}
+    devices:
+      - /dev/kvm
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 8006:8006
+      - 3389:3389/tcp
+      - 3389:3389/udp
+    stop_grace_period: 2m
+    restart: ${WINDOWS_RESTART_POLICY}
+  # Serviço: wordpress
+  # Variáveis: WORDPRESS_VERSION, WORDPRESS_CONTAINER_NAME, WORDPRESS_RESTART_POLICY
+  wordpress:
+    image: wordpress:${WORDPRESS_VERSION}
+    container_name: ${WORDPRESS_CONTAINER_NAME}
+    ports:
+      - 8081:80
+    volumes:
+      - wordpress:/var/www/html
+    restart: ${WORDPRESS_RESTART_POLICY}
+
+volumes:
+  appsmith:
+  gitea:
+  grafana:
+  localstack:
+  linkstack:
+  matomo:
+  metabase:
+  mysql:
+  mongo:
+  nextcloud:
+  ollama:
+  open-webui:
+  pgadmin:
+  portainer:
+  postgres:
+  rabbitmq:
+  redisinsight:
+  rethinkdb:
+  sonarqube:
+  verdaccio:
+  wordpress:
